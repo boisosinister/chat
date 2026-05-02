@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Chat Room</title>
+  <style>
+    body { font-family: Arial; margin: 0; padding: 10px; }
+    #chat { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+    #input { display: flex; margin-top: 10px; }
+    #msg { flex: 1; padding: 8px; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+
+<h3>Chat Room</h3>
+
+<div id="chat"></div>
+
+<div id="input">
+  <input id="msg" placeholder="Type message..." />
+  <button onclick="sendMsg()">Send</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+  // 🔴 PASTE YOUR FIREBASE CONFIG HERE
+  const firebaseConfig = {
+    apiKey: "PASTE_HERE",
+    authDomain: "PASTE_HERE",
+    projectId: "PASTE_HERE"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // simple auto-mod filter
+  const badWords = ["badword1", "badword2", "stupid", "hate"];
+
+  function clean(text) {
+    badWords.forEach(w => {
+      text = text.replaceAll(w, "****");
+    });
+    return text;
+  }
+
+  function sendMsg() {
+    let input = document.getElementById("msg");
+    let text = clean(input.value.trim());
+
+    if (!text) return;
+
+    db.collection("messages").add({
+      text: text,
+      time: Date.now()
+    });
+
+    input.value = "";
+  }
+
+  db.collection("messages")
+    .orderBy("time")
+    .onSnapshot(snapshot => {
+      let chat = document.getElementById("chat");
+      chat.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        chat.innerHTML += "<div>" + doc.data().text + "</div>";
+      });
+
+      chat.scrollTop = chat.scrollHeight;
+    });
+</script>
+
+</body>
+</html>
